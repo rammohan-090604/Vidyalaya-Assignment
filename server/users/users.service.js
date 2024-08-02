@@ -1,15 +1,26 @@
 const axios = require('axios').default;
 
+// Function to fetch all users
 async function fetchAllUsers() {
   const { data: users } = await axios.get(
-    'https://jsonplaceholder.typicode.com/users',
+    'https://jsonplaceholder.typicode.com/users'
   );
-
   return users;
 }
-// Route to fetch user are https://jsonplaceholder.typicode.com/users/:userId
+
+// Function to fetch a user by ID and return filtered user information
 async function fetchUserById(userId) {
-  return {};
+  const { data: user } = await axios.get(
+    `https://jsonplaceholder.typicode.com/users/${userId}`
+  );
+
+
+  const filteredUser = {
+    name: user.name,
+    email: user.email,
+  };
+
+  return filteredUser;
 }
 
 module.exports = { fetchAllUsers, fetchUserById };

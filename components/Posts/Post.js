@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import React, { useRef } from 'react';
 import styled from '@emotion/styled';
 
+// Styled components
 const PostContainer = styled.div(() => ({
   width: '300px',
   margin: '10px',
@@ -46,6 +47,7 @@ const Content = styled.div(() => ({
 
 const Button = styled.button(() => ({
   position: 'absolute',
+  top : '50%',
   bottom: 0,
   backgroundColor: 'rgba(255, 255, 255, 0.5)',
   border: 'none',
@@ -53,6 +55,29 @@ const Button = styled.button(() => ({
   fontSize: '20px',
   cursor: 'pointer',
   height: '50px',
+}));
+
+const UserContent = styled.div(() => ({
+  padding: '10px',
+  '& > h2': {
+    marginBottom: '16px',
+  },
+  display : 'flex',
+  gap: '1rem',
+}));
+
+const Logo = styled.span(() => ({
+  display: 'inline-flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding : '0.4rem',
+  borderRadius : "50%",
+  backgroundColor : '#808080',
+  color : '#ffffff',
+  fontSize : '20px',
+  fontWeight : 700,
+  minWidth: '40px',
+  minHeight: '40px',
 }));
 
 const PrevButton = styled(Button)`
@@ -63,13 +88,19 @@ const NextButton = styled(Button)`
   right: 10px;
 `;
 
+const calculateSymbol = (name) => {
+  return name.split(' ').map(word => word[0]).join('').toUpperCase();
+};
+
 const Post = ({ post }) => {
   const carouselRef = useRef(null);
+
+  const symbol = calculateSymbol(post.user.name);
 
   const handleNextClick = () => {
     if (carouselRef.current) {
       carouselRef.current.scrollBy({
-        left: 50,
+        left: 300,
         behavior: 'smooth',
       });
     }
@@ -78,7 +109,7 @@ const Post = ({ post }) => {
   const handlePrevClick = () => {
     if (carouselRef.current) {
       carouselRef.current.scrollBy({
-        left: -70,
+        left: -300,
         behavior: 'smooth',
       });
     }
@@ -87,6 +118,13 @@ const Post = ({ post }) => {
   return (
     <PostContainer>
       <CarouselContainer>
+        <UserContent>
+          <Logo>{symbol}</Logo>
+          <div>
+            <h3>{post.user.name}</h3>
+            <p>{post.user.email}</p>
+          </div>
+        </UserContent>
         <Carousel ref={carouselRef}>
           {post.images.map((image, index) => (
             <CarouselItem key={index}>
@@ -107,11 +145,15 @@ const Post = ({ post }) => {
 
 Post.propTypes = {
   post: PropTypes.shape({
-    content: PropTypes.any,
-    images: PropTypes.shape({
-      map: PropTypes.func,
-    }),
-    title: PropTypes.any,
+    images: PropTypes.arrayOf(PropTypes.shape({
+      url: PropTypes.string.isRequired,
+    })),
+    title: PropTypes.string.isRequired,
+    body: PropTypes.string.isRequired,
+    user: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      email: PropTypes.string.isRequired,
+    }).isRequired,
   }),
 };
 

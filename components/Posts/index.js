@@ -1,9 +1,9 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import styled from '@emotion/styled';
 import Post from './Post';
 import Container from '../common/Container';
-import useWindowWidth from '../hooks/useWindowWidth';
+import { WindowWidthContext } from '../common/WindowWidthProvider';
 
 const PostListContainer = styled.div(() => ({
   display: 'flex',
@@ -35,41 +35,57 @@ const LoadMoreButton = styled.button(() => ({
 export default function Posts() {
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [limit, setLimit] = useState(10);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
 
-  const { isSmallerDevice } = useWindowWidth();
+  const { isSmallerDevice } = useContext(WindowWidthContext);
+
+  const fetchPosts = async (newStart, newLimit) => {
+    const { data: fetchedPosts } = await axios.get('/api/v1/posts', {
+      params: { start: newStart, limit: newLimit },
+    });
+    return fetchedPosts;
+  };
 
   useEffect(() => {
-    const fetchPost = async () => {
-      const { data: posts } = await axios.get('/api/v1/posts', {
-        params: { start: 0, limit: isSmallerDevice ? 5 : 10 },
-      });
-      setPosts(posts);
+    const loadInitialPosts = async () => {
+      const initialLimit = isSmallerDevice ? 5 : 10;
+      const initialPosts = await fetchPosts(0, initialLimit);
+      setPosts(initialPosts);
+      setLimit(initialLimit);
+      setHasMorePosts(initialPosts.length === initialLimit);
     };
 
-    fetchPost();
+    loadInitialPosts();
   }, [isSmallerDevice]);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 3000);
+    const newLimit = isSmallerDevice ? 5 : 10;
+    const additionalPosts = await fetchPosts(posts.length, newLimit);
+
+    setPosts((prevPosts) => [...prevPosts, ...additionalPosts]);
+    setLimit(newLimit);
+    setHasMorePosts(additionalPosts.length === newLimit);
+    setIsLoading(false);
   };
 
   return (
     <Container>
       <PostListContainer>
-        {posts.map(post => (
-          <Post post={post} />
+        {posts.map((post, index) => (
+          <Post key={index} post={post} />
         ))}
       </PostListContainer>
 
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <LoadMoreButton onClick={handleClick} disabled={isLoading}>
-          {!isLoading ? 'Load More' : 'Loading...'}
-        </LoadMoreButton>
-      </div>
+      {hasMorePosts && (
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <LoadMoreButton onClick={handleClick} disabled={isLoading}>
+            {!isLoading ? 'Load More' : 'Loading...'}
+          </LoadMoreButton>
+        </div>
+      )}
     </Container>
   );
 }
